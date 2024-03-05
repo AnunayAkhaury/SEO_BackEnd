@@ -1,30 +1,35 @@
-from pinecone import Pinecone
-from pinecone import ServerlessSpec
+import pinecone
 from dotenv import load_dotenv
 import os
+load_dotenv()
 
-def initialize_pinecone():
-    load_dotenv()
-    pc = Pinecone(os.getenv('PINECONE_API_KEY'))
-    if "quickstart" not in pc.list_indexes():
-        pc.create_index(
-            name="quickstart",
-            dimension=8,
-            metric="euclidean",
-            spec=ServerlessSpec(
-                cloud='aws', 
-                region='us-west-2'
-            ) 
-        )
-    return pc.Index("quickstart")
+pinecone_api_key = os.getenv("PINECONE_API_KEY")
 
 
-def upsert_vectors(index, vectors, namespace):
-    index.upsert(vectors=vectors, namespace=namespace)
+pinecone.init(api_key=pinecone_api_key, environment="us-west1-gcp")
+
+# def initialize_pinecone():
+#     load_dotenv()
+#     pc = Pinecone(os.getenv('PINECONE_API_KEY'))
+#     if "quickstart" not in pc.list_indexes():
+#         pc.create_index(
+#             name="quickstart",
+#             dimension=8,
+#             metric="euclidean",
+#             spec=ServerlessSpec(
+#                 cloud='aws', 
+#                 region='us-west-2'
+#             ) 
+#         )
+#     return pc.Index("quickstart")
 
 
-def query_vectors(index, namespace, vector, top_k=3):
-    return index.query(namespace=namespace, vector=vector, top_k=top_k, include_values=True)
+# def upsert_vectors(index, vectors, namespace):
+#     index.upsert(vectors=vectors, namespace=namespace)
+
+
+# def query_vectors(index, namespace, vector, top_k=3):
+#     return index.query(namespace=namespace, vector=vector, top_k=top_k, include_values=True)
 
 
 # pc.create_index(
