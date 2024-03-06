@@ -1,11 +1,19 @@
 import requests
 from collections import Counter
 from googleapiclient.discovery import build
+from models import check_category
+from pymongo.mongo_client import MongoClient
+from pymongo.server_api import ServerApi
+
+uri = "mongodb://localhost:27017"
+
+
+client = MongoClient(uri, server_api=ServerApi('1'))
 
 # Function to get industry from Diffbot
 def get_industry_from_diffbot(url):
     api_url = "https://api.diffbot.com/v3/article"
-    api_key = "cf4cd0544b4bbae862e8b792c7959881"  # Replace with your Diffbot API key
+    api_key = "4a71f6094674860fb26e1bb82234db5f"  # Replace with your Diffbot API key
     params = {
         'token': api_key,
         'url': url,
@@ -75,7 +83,7 @@ def extract_keywords_from_links(links):
             break
         article_data = get_industry_from_diffbot(link)  # Reusing the function to get the article data
         if article_data and 'tags' in article_data:
-            tags = article_data['tags'][:5]  # Attempt to get up to five tags per article
+            tags = article_data['tags'][:20]  # Attempt to get up to five tags per article
             for tag in tags:
                 if 'label' in tag:
                     all_keywords.add(tag['label'])  # Add unique keywords
@@ -135,36 +143,76 @@ def extract_metadata_from_links(links):
 #     main()
 
 def main(user_link):
-    # No longer need to input inside the function
-    categories_str = ""  # Use a string to hold all categories
-    keywords = []
-    print(user_link)
-    # Fetch the article data from Diffbot
-    article_data = get_industry_from_diffbot(user_link)
+    # # No longer need to input inside the function
+    # categories_str = ""  # Use a string to hold all categories
+    # keywords = []
+    # print(user_link)
+    # # Fetch the article data from Diffbot
+    # article_data = get_industry_from_diffbot(user_link)
 
-    if article_data:
-        # Extract categories (industries)
-        general_industries = article_data.get('categories', [])
-        categories = [category.get('name', '') for category in general_industries]
+    # if article_data:
+    #     # Extract categories (industries)
+    #     general_industries = article_data.get('categories', [])
+    #     categories = [category.get('name', '') for category in general_industries]
+    #     prin
+    #     # Extract specific industries from tags, and use tags as keywords
+    #     specific_industry = get_specific_industry(article_data)
+    #     if specific_industry:
+    #         categories.extend(specific_industry.split(', '))
 
-        # Extract specific industries from tags, and use tags as keywords
-        specific_industry = get_specific_industry(article_data)
-        if specific_industry:
-            categories.extend(specific_industry.split(', '))
+    #     # Concatenate all categories into a single string
+    #     categories_str = ', '.join(categories)
+    #     print(categories_str)
+    #     # Use tags as keywords
+    #     # if 'tags' in article_data and article_data['tags']:
+    #     #     keywords = [tag.get('label', '') for tag in article_data['tags'] if 'label' in tag]
 
-        # Concatenate all categories into a single string
-        categories_str = ', '.join(categories)
+    #     keywords = extract_keywords_from_links(user_link)
+    #     if keywords:
+    #         print("Unique keywords extracted from the articles:", ', '.join(keywords))
+    #     else:
+    #         print("No keywords could be extracted.")
 
-        # Use tags as keywords
-        if 'tags' in article_data and article_data['tags']:
-            keywords = [tag.get('label', '') for tag in article_data['tags'] if 'label' in tag]
-
-        print("Categories (Industries) found:", categories_str)
-        print("Keywords found:", ', '.join(keywords))
-    else:
-        print("Failed to fetch data for the provided link.")
+    #     print("Categories (Industries) found:", categories_str)
+    #     print("Keywords found:", ', '.join(keywords))
+    # else:
+    #     print("Failed to fetch data for the provided link.")
 
     # Return categories string and keywords list
+    categories_str = ""  # Use a string to hold all categories
+    keywords = []
+    print("entered")
+    industries = crawl_website(user_link)
+    print("done")
+    if industries:
+        print(industries)
+        print(type(industries)) 
+        print("The three most common industries are:", ', '.join(industries))
+        print("\nLinks that fit well into all three industries:")
+        links = google_search(industries)
+        categories_str = ', '.join(industries)
+        print(categories_str)
+        keywords = check_category(categories_str)
+        if keywords:
+            return categories_str, keywords
+        
+        print("\nExtracting keywords from the articles...")
+        keywords = extract_keywords_from_links(links)
+        if keywords:
+            print("Unique keywords extracted from the articles:", ', '.join(keywords))
+        else:
+            print("No keywords could be extracted.")
+
+        print("\nExtracting metadata from the articles...")
+        metadata = extract_metadata_from_links(links)
+        if metadata:
+            for data in metadata:
+                print(f"Title: {data['title']}, Author: {data['author']}, Date: {data['date']}, URL: {data['url']}")
+        else:
+            print("No metadata could be extracted.")
+    else:
+        print("Failed to identify three distinct industries.")
+
     return categories_str, keywords
 
 

@@ -17,7 +17,10 @@ class KeywordsUpdate(BaseModel):
     
 @app.post("/categories/", status_code=status.HTTP_201_CREATED)
 def create_category(category_data: CategoryURL):
+    print(category_data.url)
     categories, keywords = main(category_data.url)
+    print(categories)
+    print(keywords)
     result_keywords = add_category(categories, keywords)
     return {
         "url": category_data.url,
