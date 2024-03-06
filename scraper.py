@@ -138,7 +138,7 @@ def main(user_link):
     # No longer need to input inside the function
     categories_str = ""  # Use a string to hold all categories
     keywords = []
-
+    print(user_link)
     # Fetch the article data from Diffbot
     article_data = get_industry_from_diffbot(user_link)
 
